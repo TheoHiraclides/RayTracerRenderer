@@ -8,39 +8,41 @@
 #include "stb_image.h"
 
 #include <iostream>
+#include <chrono>
 
 #include "Scene.h"
 
 int main() {
+    auto start = std::chrono::high_resolution_clock::now();
+
     int W = 512;
-    int H = 512;
+    int H = W;
 
-    Scene scene = Scene();
-    scene.addSphere(Vector(), 15.0);
-    scene.spheres[0].material.albedo = Vector(1.0, 0.0, 0.0);
-    scene.spheres[0].material.specularity = 0.5;
+    Scene scene = Scene(Camera(Vector(0, 0, 70), H, W));
+    /*scene.addSphere(Vector(0, 20, 0), 15.0, Material(Vector(1.0, 0.0, 0.0), Vector(), 0.0, 0.0));
+    scene.addSphere(Vector(0, 0, -10000), 9940.0, Material(Vector(0.0, 1.0, 0.0)));
+    scene.addSphere(Vector(0, 10000, 0), 9960.0, Material(Vector(1.0, 0.0, 1.0), Vector(), 0.0));
+    scene.addSphere(Vector(10000, 0, 0), 9960.0, Material(Vector(0.0, 1.0, 1.0), Vector(), 0.0));
+    scene.addSphere(Vector(-10000, 0, 0), 9960.0, Material(Vector(0.0, 0.0, 1.0), Vector(), 0.0));
+    scene.addSphere(Vector(0, -10000, 0), 9960.0, Material(Vector(1.0, 1.0, 0.0)));
+    scene.addSphere(Vector(25, 20, -25), 10.0, Material(Vector(1.0, 1.0, 1.0), Vector(), 1.0));*/
 
-    scene.addSphere(Vector(0, 0, -10000), 9940.0);
-    scene.spheres[1].material.albedo = Vector(0.0, 1.0, 0.0);
-
-    scene.addSphere(Vector(0, 10000, 0), 9960.0);
-    scene.spheres[2].material.albedo = Vector(1.0, 0.0, 1.0);
-
-    scene.addSphere(Vector(10000, 0, 0), 9960.0);
-    scene.spheres[3].material.albedo = Vector(0.0, 1.0, 1.0);
-
-    scene.addSphere(Vector(-10000, 0, 0), 9960.0);
-    scene.spheres[4].material.albedo = Vector(0.0, 0.0, 1.0);
-
-    scene.addSphere(Vector(0, -10000, 0), 9960.0);
-    scene.spheres[5].material.albedo = Vector(1.0, 1.0, 0.0);
-
-    scene.addSphere(Vector(25, 20, -25), 10.0);
-    scene.spheres[6].material.specularity = 1;
+    scene.addSphere(Vector(0, 20, 0), 15.0, Material(Vector(1.0, 0.0, 0.0), Vector(), 0.0, 0.0));
+    scene.addSphere(Vector(0, 0, -10000), 9940.0, Material(Vector(0.0, 1.0, 0.0)));
+    scene.addSphere(Vector(0, 10000, 0), 9960.0, Material(Vector(1.0, 0.0, 1.0), Vector(), 0.0, 0.5));
+    scene.addSphere(Vector(10000, 0, 0), 9960.0, Material(Vector(0.0, 1.0, 1.0), Vector(), 0.0, 0.0));
+    scene.addSphere(Vector(-10000, 0, 0), 9960.0, Material(Vector(0.0, 0.0, 1.0), Vector(), 0.0, 0.8));
+    scene.addSphere(Vector(0, -10000, 0), 9960.0, Material(Vector(1.0, 1.0, 0.0)));
+    scene.addSphere(Vector(25, 20, -25), 10.0, Material(Vector(1.0, 1.0, 1.0), Vector(),  1.0));
 
     std::vector<unsigned char> image2 = scene.getImage();
 
     stbi_write_png("image.png", W, H, 3, &image2[0], 0);
+
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+
+    std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
 
     return 0;
 }

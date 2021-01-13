@@ -13,10 +13,33 @@ Intersect Scene::getIntersect(const Ray& ray) {
     return intersect_result;
 }
 
+double Scene::getLightObstruction(Vector intersection, Vector toLightNormalized, double distance_sqr)
+{
+    Intersect intersect = getIntersect(Ray(intersection, toLightNormalized));
+
+    if (!intersect.result || std::pow(intersect.distance, 2) > distance_sqr) {
+        return 1.0;
+    } else {
+        if (spheres[intersect.id].material.opacity >= 1.0) {
+            return 0.0;
+        } else {
+            double epsilon = 0.00000001;
+
+            Vector intersection = intersection + intersect.distance * toLightNormalized;
+
+            Vector toLight = (light - intersection);
+
+            return std::sqrt(1 - spheres[intersect.id].material.opacity) * getLightObstruction(intersection + toLightNormalized * epsilon, toLightNormalized, toLight.sqrNorm());
+        }
+    }
+}
+
 Vector Scene::getColor(const Ray& ray, int rebounds) {
 	Vector color = Vector();
 	
     Intersect intersect = getIntersect(ray);
+
+    double epsilon = 0.00000001;
 
     if (intersect.result) {
         Vector intersection = ray.center + intersect.distance * ray.direction;
@@ -26,16 +49,52 @@ Vector Scene::getColor(const Ray& ray, int rebounds) {
         Vector toLight = (light - intersection);
         Vector toLightNormalized = toLight.get_normalized();
 
-        Intersect light_intersection = getIntersect(Ray(intersection + normal*0.000001, toLightNormalized));
+        double light_obstruction = getLightObstruction(intersection + toLightNormalized * epsilon, toLightNormalized, toLight.sqrNorm());
+
+        color = light_obstruction * spheres[intersect.id].material.albedo * std::max(0.0, dot(toLightNormalized, normal) / toLight.sqrNorm());
+        if (rebounds >= settings.max_rebounds) color = color * spheres[intersect.id].material.opacity;
+
+        /* Intersect light_intersection = getIntersect(Ray(intersection + normal * epsilon, toLightNormalized));
         if (!light_intersection.result || std::pow(light_intersection.distance, 2) > toLight.sqrNorm()) {
             color = spheres[intersect.id].material.albedo * std::max(0.0, dot(toLightNormalized, normal) / toLight.sqrNorm());
-        }
+            if (rebounds >= settings.max_rebounds) color = color * spheres[intersect.id].material.opacity;
+        } */
+
 
         if (spheres[intersect.id].material.specularity > 0.0 && rebounds < settings.max_rebounds) {
             color = (1 - spheres[intersect.id].material.specularity) * color;
             Vector reflect = ray.direction - 2 * dot(ray.direction, normal) * normal;
-            Ray reflected_ray = Ray(intersection + normal * 0.000001, reflect);
+            Ray reflected_ray = Ray(intersection + normal * epsilon, reflect);
             color = color + spheres[intersect.id].material.specularity * getColor(reflected_ray, rebounds + 1);
+        }
+
+        if (spheres[intersect.id].material.opacity < 1.0 && rebounds < settings.max_rebounds) {
+            color = spheres[intersect.id].material.opacity * color;
+            double refractivity = spheres[intersect.id].material.refractivity;
+            if (dot(ray.direction, normal) < 0.0) {
+                // std::cout << "switched/ ";
+                refractivity = 1 / refractivity;
+            }
+            else {
+                normal = -1 * normal;
+            }
+            double root = 1 - std::pow(refractivity, 2) * (1 - std::pow(dot(ray.direction, normal), 2));
+            if (root <= 0) {
+                // std::cout << "reflected" << rebounds << "//" << intersect.distance << "/" << intersect.id << ": ";
+                // std::cout << intersection[0] << "/" << intersection[1] << "/" << intersection[2] << "\n";
+                Vector reflect = ray.direction - 2 * dot(ray.direction, normal) * normal;
+                Ray reflected_ray = Ray(intersection + normal * epsilon, reflect);
+                color = color + (1 - spheres[intersect.id].material.opacity) * getColor(reflected_ray, rebounds + 1);
+            }
+            else {
+                Vector refract = refractivity * ray.direction - (refractivity * dot(ray.direction, normal) + std::sqrt(root)) * normal;
+                Ray refracted_ray = Ray(intersection + refract * epsilon, refract);
+                /* std::cout << "refracted: " << rebounds << "//" << intersect.distance << "/" << intersect.id <<": ";
+                std::cout << intersection[0] << "/" << intersection[1] << "/" << intersection[2] << " :: ";
+                std::cout << ray.direction[0] << "/" << ray.direction[1] << "/" << ray.direction[2] << " ::: ";
+                std::cout << refract[0] << "/" << refract[1] << "/" << refract[2] << "\n"; */
+                color = color + (1 - spheres[intersect.id].material.opacity) * getColor(refracted_ray, rebounds + 1);
+            }
         }
     }
 

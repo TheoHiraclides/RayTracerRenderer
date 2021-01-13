@@ -1,2 +1,2 @@
 # RayTracerRenderer
-Ray tracer renderer for school project
+Ray tracer renderer for a school project

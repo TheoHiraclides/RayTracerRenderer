@@ -11,8 +11,9 @@ public:
     Vector emissivity;
     double specularity;
     double opacity;
+    double refractivity;
 
-    Material(Vector albedo = Vector(1.0, 1.0, 1.0), Vector emissivity = Vector(), double specularity = 0.0, double opacity = 1.0) : albedo(albedo), emissivity(emissivity), specularity(specularity), opacity(opacity) {};
+    Material(Vector albedo = Vector(1.0, 1.0, 1.0), Vector emissivity = Vector(), double specularity = 0.0, double opacity = 1.0, double refractivity = 2.0) : albedo(albedo), emissivity(emissivity), specularity(specularity), opacity(opacity), refractivity(refractivity) {};
 };
 
 class Intersect {

@@ -10,7 +10,7 @@ class SceneSettings {
 public:
 	int max_rebounds;
 
-	SceneSettings(int rebounds = 5) { max_rebounds = rebounds; }
+	SceneSettings(int rebounds = 10) { max_rebounds = rebounds; }
 };
 
 class Scene {
@@ -29,4 +29,6 @@ public:
 	
 	Vector getColor(const Ray& ray, int rebounds = 0);
 	Intersect getIntersect(const Ray& ray);
+
+	double getLightObstruction(Vector intersection, Vector toLightNormalized, double distance_sqr);
 };

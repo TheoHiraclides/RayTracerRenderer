@@ -17,7 +17,7 @@ public:
 	Vector get_normalized();
 	double const dot(const Vector& v);
 
-	void print() { std::cout << "(" << coords[0] << ", " << coords[1] << ", " << coords[2] << ")"; }
+	const void print() { std::cout << "(" << coords[0] << ", " << coords[1] << ", " << coords[2] << ")"; }
 };
 
 Vector operator+(const Vector& v1, const Vector& v2);
