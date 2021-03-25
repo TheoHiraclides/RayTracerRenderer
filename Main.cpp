@@ -9,6 +9,8 @@
 
 #include <iostream>
 #include <chrono>
+#include <ctime>
+#include <string>
 
 #include "Scene.h"
 
@@ -27,22 +29,34 @@ int main() {
     scene.addSphere(Vector(0, -10000, 0), 9960.0, Material(Vector(1.0, 1.0, 0.0)));
     scene.addSphere(Vector(25, 20, -25), 10.0, Material(Vector(1.0, 1.0, 1.0), Vector(), 1.0));*/
 
-    scene.addSphere(Vector(0, 20, 0), 15.0, Material(Vector(1.0, 0.0, 0.0), Vector(), 0.0, 0.0));
+    /*scene.addSphere(Vector(0, 20, 0), 15.0, Material(Vector(1.0, 0.0, 0.0), Vector(), 0.0, 0.0));
     scene.addSphere(Vector(0, 0, -10000), 9940.0, Material(Vector(0.0, 1.0, 0.0)));
     scene.addSphere(Vector(0, 10000, 0), 9960.0, Material(Vector(1.0, 0.0, 1.0), Vector(), 0.0, 0.5));
     scene.addSphere(Vector(10000, 0, 0), 9960.0, Material(Vector(0.0, 1.0, 1.0), Vector(), 0.0, 0.0));
     scene.addSphere(Vector(-10000, 0, 0), 9960.0, Material(Vector(0.0, 0.0, 1.0), Vector(), 0.0, 0.8));
     scene.addSphere(Vector(0, -10000, 0), 9960.0, Material(Vector(1.0, 1.0, 0.0)));
-    scene.addSphere(Vector(25, 20, -25), 10.0, Material(Vector(1.0, 1.0, 1.0), Vector(),  1.0));
+    scene.addSphere(Vector(25, 20, -25), 10.0, Material(Vector(1.0, 1.0, 1.0), Vector(),  1.0));*/
+
+    scene.addSphere(Vector(0, 20, 0), 15.0, Material(Vector(1.0, 0.0, 0.0), Vector(), 0.0));
+    scene.addSphere(Vector(0, 0, -10000), 9940.0, Material(Vector(0.0, 1.0, 0.0)));
+    scene.addSphere(Vector(0, 10000, 0), 9960.0, Material(Vector(1.0, 0.0, 1.0), Vector(), 0.0));
+    scene.addSphere(Vector(10000, 0, 0), 9960.0, Material(Vector(0.0, 1.0, 1.0), Vector(), 0.0));
+    scene.addSphere(Vector(-10000, 0, 0), 9960.0, Material(Vector(0.0, 0.0, 1.0), Vector(), 0.0));
+    scene.addSphere(Vector(0, -10000, 0), 9960.0, Material(Vector(1.0, 1.0, 0.0)));
+    scene.addSphere(Vector(25, 20, -25), 10.0, Material(Vector(1.0, 1.0, 1.0), Vector(), 1.0));
 
     std::vector<unsigned char> image2 = scene.getImage();
-
-    stbi_write_png("image.png", W, H, 3, &image2[0], 0);
 
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 
-    std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
+    std::cout << "Time taken by function: " << duration.count()/1000000 << " seconds" << std::endl;
+
+    std::string name = "image";
+    name += std::to_string((int)(duration.count() / 1000000));
+    name += ".png";
+
+    stbi_write_png(name.c_str(), W, H, 3, &image2[0], 0);
 
     return 0;
 }

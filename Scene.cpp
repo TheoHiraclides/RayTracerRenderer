@@ -1,6 +1,8 @@
 #include "Scene.h"
 
 #include <iostream>
+#include <random>
+#include <cmath>
 
 Intersect Scene::getIntersect(const Ray& ray) {
     Intersect intersect_result = Intersect();
@@ -20,6 +22,7 @@ double Scene::getLightObstruction(Vector intersection, Vector toLightNormalized,
     if (!intersect.result || std::pow(intersect.distance, 2) > distance_sqr) {
         return 1.0;
     } else {
+        return 0.0;
         if (spheres[intersect.id].material.opacity >= 1.0) {
             return 0.0;
         } else {
@@ -36,6 +39,7 @@ double Scene::getLightObstruction(Vector intersection, Vector toLightNormalized,
 
 Vector Scene::getColor(const Ray& ray, int rebounds) {
 	Vector color = Vector();
+    if (rebounds >= settings.max_rebounds) return color;
 	
     Intersect intersect = getIntersect(ray);
 
@@ -52,7 +56,6 @@ Vector Scene::getColor(const Ray& ray, int rebounds) {
         double light_obstruction = getLightObstruction(intersection + toLightNormalized * epsilon, toLightNormalized, toLight.sqrNorm());
 
         color = light_obstruction * spheres[intersect.id].material.albedo * std::max(0.0, dot(toLightNormalized, normal) / toLight.sqrNorm());
-        if (rebounds >= settings.max_rebounds) color = color * spheres[intersect.id].material.opacity;
 
         /* Intersect light_intersection = getIntersect(Ray(intersection + normal * epsilon, toLightNormalized));
         if (!light_intersection.result || std::pow(light_intersection.distance, 2) > toLight.sqrNorm()) {
@@ -60,15 +63,25 @@ Vector Scene::getColor(const Ray& ray, int rebounds) {
             if (rebounds >= settings.max_rebounds) color = color * spheres[intersect.id].material.opacity;
         } */
 
+        if (spheres[intersect.id].material.opacity > 0.0 && spheres[intersect.id].material.specularity < 1.0) {
+            std::uniform_real_distribution<double> distrib(0, 1);
 
-        if (spheres[intersect.id].material.specularity > 0.0 && rebounds < settings.max_rebounds) {
+            double u1 = distrib(engine);
+            double u2 = distrib(engine);
+
+            Ray next_ray = Ray(intersection + normal * epsilon, random_cos(normal, u1, u2));
+
+            color = color + multiply(spheres[intersect.id].material.albedo, getColor(next_ray, rebounds + 1));
+        }
+
+        if (spheres[intersect.id].material.specularity > 0.0) {
             color = (1 - spheres[intersect.id].material.specularity) * color;
             Vector reflect = ray.direction - 2 * dot(ray.direction, normal) * normal;
             Ray reflected_ray = Ray(intersection + normal * epsilon, reflect);
             color = color + spheres[intersect.id].material.specularity * getColor(reflected_ray, rebounds + 1);
         }
 
-        if (spheres[intersect.id].material.opacity < 1.0 && rebounds < settings.max_rebounds) {
+        if (spheres[intersect.id].material.opacity < 1.0) {
             color = spheres[intersect.id].material.opacity * color;
             double refractivity = spheres[intersect.id].material.refractivity;
             if (dot(ray.direction, normal) < 0.0) {
@@ -101,13 +114,17 @@ Vector Scene::getColor(const Ray& ray, int rebounds) {
     return color;
 }
 
-std::vector<unsigned char> Scene::getImage() {
+std::vector<unsigned char> Scene::getImage(int  N) {
     std::vector<double> rawImage(camera.height * camera.width * 3, 0.0);
     double maxColor = 0.0;
 
+    #pragma fomp parallel for schedule(dynamic,1);
     for (int i = 0; i < camera.height; i++) {
         for (int j = 0; j < camera.width; j++) {
-            Vector color = getColor(camera.getRay(i, j));
+            Vector color = Vector();
+            for (int k = 0; k < N; k++) {
+                color = color + getColor(camera.getRay(i, j));
+            }
             rawImage[(i*camera.height + j) * 3] = color[0];
             maxColor = std::max(maxColor, color[0]);
             rawImage[(i * camera.height + j) * 3 + 1] = color[1];

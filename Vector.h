@@ -28,3 +28,6 @@ Vector operator/(const Vector& v, double d);
 
 double dot(const Vector& v1, const Vector& v2);
 Vector multiply(const Vector& v1, const Vector& v2);
+Vector cross(const Vector& v1, const Vector& v2);
+
+Vector random_cos(const Vector& n, double u1, double u2);
